@@ -1,37 +1,103 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<link rel="stylesheet" href="https://unpkg.com/jquery.terminal@2.x.x/css/jquery.terminal.min.css"/>
 	<title></title>
+	<style type="text/css">
+		#wrapper {
+			min-height: 20vh;
+			max-height: 33vh;
+			color: var(--color, #aaa);
+			background-color: var(--background, #000);
+			padding: 10px;
+			box-sizing: border-box;
+			--color: lime;
+			overflow: scroll;
+		}
+		pre, #wrapper {
+			margin: 0;
+			margin: 0;
+		}
+		pre, .cmd {
+			line-height: 14px;
+			font-size: 12px;
+		}
+	</style>
 </head>
 <body>
 	<script src="jquery-3.4.1.js"></script>
+	<script src="https://unpkg.com/jquery.terminal@2.x.x/js/jquery.terminal.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/jquery.terminal@2.x.x/css/jquery.terminal.min.css"/>
 	<script src="signalr.js"></script>
 
 	<script>
-	const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/gameHub")
-    .withAutomaticReconnect([0,1000,3000,5000,10000,null])
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
+		const connection = new signalR.HubConnectionBuilder()
+		.withUrl("/gameHub")
+		.withAutomaticReconnect([0,1000,3000,5000,10000])
+		.configureLogging(signalR.LogLevel.Information)
+		.build();
 
-    connection.on("Message", (message) => {
-    	console.log("Received message:" + message);
-    });
+		connection.on("Message", (message) => {
+			console.log("Received message:" + message);
+		});
 
-	connection.start().then(function () {
-	    console.log("connected");
-	    var pp = connection.invoke("Login", "john").catch(err => console.error(err.toString()));
-	    var qq = connection.invoke("Logout", "john").catch(err => console.error(err.toString()));
-	});
-
-	
-
-	console.log("Here")
-
+		connection.start().then(function () {
+			console.log("connected");
+			var pp = connection.invoke("Login", "john").catch(err => console.error(err.toString()));
+			var qq = connection.invoke("Logout", "john").catch(err => console.error(err.toString()));
+		});
 
 	</script>
 
+
 	<p>Hello</p>
+
+	<div id="wrapper">
+		<pre>Simple Terminal using only cmd plugin from jQuery Terminal</pre>
+		<div id="terminal"></div>
+		
+		<!-- <div id="terminal" style="height:100px;"></div> -->
+		
+	</div>
+	<script type="text/javascript">
+		//$('#terminal').terminal();
+
+		// var xx = { greetings: function(callback) {
+  //        						var text = "Welcome to Python Service";
+  //        						return 'Wellcome'
+  //        						//callback(this.cols() > text.length ? text : 'Wellcome'); 
+  //        		  }};
+
+		//$('#terminal').terminal("service.py", xx);
+
+		var pre = $('pre');
+		var wrapper = $('#wrapper');
+		function scroll_to_bottom() {
+			var sHeight = wrapper.prop('scrollHeight');
+			wrapper.scrollTop(sHeight);
+		}
+		var cmd = $('#terminal').cmd({
+			prompt: '> ',
+			width: '100%',
+			commands: function(command) {
+				var html = pre.html();
+				if (html) { html += '\n'; }
+				var message = "you've typed " + 
+				"<span style=\"color:white\">" + command +
+				"</span>";
+				pre.html(html + '> ' + command + '\n' + message);
+    			scroll_to_bottom();
+    	}
+    });
+
+		// $('#terminal').terminal({
+  //  			name: function(name) {
+  //     				this.read('last name: ').then(last_name => this.echo('Your name is ' + name + ' ' + last_name));
+  //  				}
+		// 	});
+
+
+	</script>
 
 </body>
 </html>
