@@ -67,9 +67,7 @@ type GameHub () =
 
 
  type GameService (hubContext :IHubContext<GameHub, IClientApi>) =
-    inherit BackgroundService ()
-  
-    member this.HubContext :IHubContext<GameHub, IClientApi> = hubContext
+    inherit BackgroundService () 
 
     override this.ExecuteAsync (stoppingToken :CancellationToken) =
         let pingTimer = new System.Timers.Timer(1000.0)
@@ -77,10 +75,12 @@ type GameHub () =
           //updateState ()
           //let stateSerialized = serializeGameState gState
           printfn "Timer elapsed"
-          this.HubContext.Clients.All.LoginResponse(true, "stateSerialized") |> ignore)
+          hubContext.Clients.All.LoginResponse(true, "stateSerialized") |> ignore)
+          //this.HubContext.Clients.All.LoginResponse(true, "stateSerialized") |> ignore)
 
         pingTimer.Start()
         System.Threading.Tasks.Task.CompletedTask
+
 
 
 
@@ -264,15 +264,18 @@ let cookieAuth (o : CookieAuthenticationOptions) =
         o.ExpireTimeSpan      <- TimeSpan.FromDays 7.0
 
 let configureApp (app : IApplicationBuilder) =
-    app.UseGiraffeErrorHandler(errorHandler)
+    app.UseGiraffeErrorHandler(errorHandler) |> ignore
         //.UseEndpoints(fun endpoints -> endpoints.MapHub<GameHub>("/gameHub") |> ignore)
-       .UseStaticFiles()
-       .UseAuthentication()
-       .UseResponseCaching()
-       .UseCors("CorsPolicy")
-       .UseSignalR(fun routes -> routes.MapHub<GameHub>(PathString "/gameHub"))
-       
-       .UseGiraffe webApp
+    app.UseStaticFiles() |> ignore
+    app.UseAuthentication() |> ignore
+    app.UseResponseCaching() |> ignore
+    app.UseCors("CorsPolicy") |> ignore
+    // In the older version of the framework we used to use the following:
+    //    app.UseSignalR(fun routes -> routes.MapHub<GameHub>(PathString "/gameHub")) |> ignore
+    // Still works but deprecated. It is replaced by the following TWO lines
+    app.UseRouting() |> ignore
+    app.UseEndpoints(fun endpoints -> endpoints.MapHub<GameHub>("/gameHub") |> ignore) |> ignore
+    app.UseGiraffe webApp |> ignore
 
 let configureServices (services : IServiceCollection) =
     services
