@@ -10,6 +10,7 @@
 	<script>
 	const connection = new signalR.HubConnectionBuilder()
     .withUrl("/gameHub")
+    .withAutomaticReconnect([0,1000,3000,5000,10000,null])
     .configureLogging(signalR.LogLevel.Information)
     .build();
 
