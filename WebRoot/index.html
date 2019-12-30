@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	<script src="jquery-3.4.1.js"></script>
+	<script src="signalr.js"></script>
+
+	<script>
+	const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/gameHub")
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
+    connection.on("Message", (message) => {
+    	console.log("Received message:" + message);
+    });
+
+	connection.start().then(function () {
+	    console.log("connected");
+	    var pp = connection.invoke("Login", "john").catch(err => console.error(err.toString()));
+	    var qq = connection.invoke("Logout", "john").catch(err => console.error(err.toString()));
+	});
+
+	
+
+	console.log("Here")
+
+
+	</script>
+
+	<p>Hello</p>
+
+</body>
+</html>
