@@ -41,10 +41,28 @@
 			console.log("Received message:" + message);
 		});
 
+		connection.on("LoginResponse", (result,user) => {
+			if (result) {
+				var pre = $('pre');
+				var html = pre.html();
+				if (html) { html += '\n'; }
+				var message =  //"Did authenticate for " + user + "";
+				"<span style=\"color:white\">" + "Did authenticate for " + user +
+				"</span>";
+				pre.html(html + "\n" + message);
+    			scroll_to_bottom();
+
+				console.log("Did authenticate for " + user);	
+			} else {
+				console.log("Authentication failed for " + user);	
+			}
+			
+		});
+
 		connection.start().then(function () {
 			console.log("connected");
-			var pp = connection.invoke("Login", "john").catch(err => console.error(err.toString()));
-			var qq = connection.invoke("Logout", "john").catch(err => console.error(err.toString()));
+			var pp = connection.invoke("Login", "dylan", "canberra").catch(err => console.error(err.toString()));
+			var qq = connection.invoke("Login", "john", "foobar").catch(err => console.error(err.toString()));
 		});
 
 	</script>
@@ -80,11 +98,28 @@
 			prompt: '> ',
 			width: '100%',
 			commands: function(command) {
+				var commands = command.split(/(\s+)/).filter( e => e.trim().length > 0); // split around spaces
+				
+				var out = command
+				if (commands.length > 0) {
+					switch (commands[0]) {
+						case "login": 
+						if (commands.length > 2) {
+							out = "logging in with: " + commands[1] + " and " + commands[2]
+							var pp = connection.invoke("Login", commands[1], commands[2]).catch(err => console.error(err.toString()));
+							//var qq = connection.invoke("Login", "john", "foobar").catch(err => console.error(err.toString()));
+						} else {
+							out = "uid and password required!"
+						}
+
+						break;
+					}
+				}
+
+				
 				var html = pre.html();
 				if (html) { html += '\n'; }
-				var message = "you've typed " + 
-				"<span style=\"color:white\">" + command +
-				"</span>";
+				var message = "<span style=\"color:white\">" + out + "</span>";
 				pre.html(html + '> ' + command + '\n' + message);
     			scroll_to_bottom();
     	}

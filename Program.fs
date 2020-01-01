@@ -34,37 +34,27 @@ type GameHub() =
     inherit Hub<IClientApi>()
     
     /// Accept client logins  
-    member this.Login(name : string, pwd: string) =
+    member this.Login(userId : string, pwd: string) =
         let connectionId = this.Context.ConnectionId
         async {
-            match! tryAuthenticate name pwd with
+            match! tryAuthenticate userId pwd with
             | true ->
-                this.Clients.Client(connectionId).LoginResponse(true, name) |> ignore
-                this.Clients.All.Message(sprintf "New Player: %s (%s)" name connectionId) |> ignore
+                register userId connectionId
+                this.Clients.Client(connectionId).LoginResponse(true, userId) |> ignore
+                this.Clients.All.Message(sprintf "New Player: %s (%s)" userId connectionId) |> ignore
             | false ->
-                this.Clients.Client(connectionId).LoginResponse(false, name) |> ignore
+                this.Clients.Client(connectionId).LoginResponse(false, userId) |> ignore
         } 
-        |> Async.Start
+        |> Async.RunSynchronously /// 
+        // Blocking here NOT A good but otherwise, however, otherwise calls to hub
+        // captured by the closure fail.
+       
         
-        
-        //printfn "Logging in with '%A', connection '%A'" name connectionId
-        
-        
-    
-    // let success, playerId = addPlayer name
-    // if success then
-    //   // Tell client login success and their playerId
-    //   this.Clients.Client(connectionId).LoginResponse(true, playerId)
-    //   // Tell clients of new player 
-    //   this.Clients.All.Message(sprintf "New Player: %s (%s)" name playerId)
-    // else 
-    //   // Tell client login failed
-    //   this.Clients.Client(connectionId).LoginResponse(false, "")
     /// Handle client logout
-    member this.Logout(playerId : string) =
-        //removePlayer playerId
-        // Tell clients of player logout
-        this.Clients.All.Message(sprintf "Player left: %s" playerId) |> ignore
+    member this.Logout(userId : string) =
+        this.Clients.All.Message(sprintf "Player left: %s" userId) |> ignore
+        deregisterAll userId
+        
     
     /// Handle player changing direction
     //   member this.Turn (playerId :string, direction :string) = 
@@ -78,12 +68,9 @@ type GameService(hubContext : IHubContext<GameHub, IClientApi>) =
     inherit BackgroundService()
     override this.ExecuteAsync(stoppingToken : CancellationToken) =
         let pingTimer = new System.Timers.Timer(1000.0)
-        pingTimer.Elapsed.Add
-            (fun _ -> 
-            //updateState ()
-            //let stateSerialized = serializeGameState gState
+        pingTimer.Elapsed.Add (fun _ -> 
             printfn "Timer elapsed"
-            hubContext.Clients.All.LoginResponse(true, "stateSerialized") 
+            hubContext.Clients.All.Message("stateSerialized") 
             |> ignore)
         //this.HubContext.Clients.All.LoginResponse(true, "stateSerialized") |> ignore)
         pingTimer.Start()
@@ -271,12 +258,17 @@ let configureApp (app : IApplicationBuilder) =
     app.UseGiraffe webApp |> ignore
 
 let configureServices (services : IServiceCollection) =
-    services.AddResponseCaching().AddGiraffe().AddHostedService<GameService>()
-        .AddAuthentication(authScheme).AddCookie(cookieAuth) |> ignore
+    services.AddResponseCaching()
+            .AddGiraffe()
+            .AddHostedService<GameService>()
+            .AddAuthentication(authScheme)
+            .AddCookie(cookieAuth) |> ignore
+
     services.Configure(fun (options : CookiePolicyOptions) -> 
         options.CheckConsentNeeded <- fun context -> true
         options.MinimumSameSitePolicy <- SameSiteMode.None)
     |> ignore
+    
     services.AddCors
         (fun options -> 
         options.AddPolicy
