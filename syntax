@@ -1,0 +1,2 @@
+#!/bin/bash
+fantomas --pageWidth 120 $@

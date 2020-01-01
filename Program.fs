@@ -1,4 +1,4 @@
-module App
+﻿module App
 
 open System
 open System.Security.Claims
@@ -34,12 +34,22 @@ type GameHub() =
     inherit Hub<IClientApi>()
     
     /// Accept client logins  
-    member this.Login(name : string) =
+    member this.Login(name : string, pwd: string) =
         let connectionId = this.Context.ConnectionId
-        this.Clients.Client(connectionId).LoginResponse(true, name) |> ignore
-        printfn "Logging in with '%A', connection '%A'" name connectionId
-        this.Clients.All.Message(sprintf "New Player: %s (%s)" name "fakeid") 
-        |> ignore
+        async {
+            match! tryAuthenticate name pwd with
+            | true ->
+                this.Clients.Client(connectionId).LoginResponse(true, name) |> ignore
+                this.Clients.All.Message(sprintf "New Player: %s (%s)" name connectionId) |> ignore
+            | false ->
+                this.Clients.Client(connectionId).LoginResponse(false, name) |> ignore
+        } 
+        |> Async.Start
+        
+        
+        //printfn "Logging in with '%A', connection '%A'" name connectionId
+        
+        
     
     // let success, playerId = addPlayer name
     // if success then
