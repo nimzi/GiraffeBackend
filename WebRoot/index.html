@@ -71,24 +71,40 @@
 	<p>Hello</p>
 
 	<div id="wrapper">
-		<pre>Simple Terminal using only cmd plugin from jQuery Terminal</pre>
+		<pre>Simple Terminal...Ready</pre>
 		<div id="terminal"></div>
 		
 		<!-- <div id="terminal" style="height:100px;"></div> -->
 		
 	</div>
 	<script type="text/javascript">
-		//$('#terminal').terminal();
-
-		// var xx = { greetings: function(callback) {
-  //        						var text = "Welcome to Python Service";
-  //        						return 'Wellcome'
-  //        						//callback(this.cols() > text.length ? text : 'Wellcome'); 
-  //        		  }};
-
-		//$('#terminal').terminal("service.py", xx);
-
 		var pre = $('pre');
+		function println(cmd,out) {
+			var html = pre.html();
+			if (html) { html += '\n'; }
+			var message = "<span style=\"color:white\">" + out + "</span>";
+			pre.html(html + '> ' + cmd + '\n' + message);
+			scroll_to_bottom();
+		}
+
+		function printPrompt(cmd) {
+			var html = pre.html();
+			if (html) { html += '\n'; }
+			pre.html(html + '> ' + cmd + '\n');
+			scroll_to_bottom();
+		}
+
+		function printMessage(out) {
+			var html = pre.html();
+			if (html) { html += '\n'; }
+			var message = "<span style=\"color:white\">" + out + "</span>";
+			pre.html(html + message);
+			scroll_to_bottom();
+		}
+
+		
+
+		
 		var wrapper = $('#wrapper');
 		function scroll_to_bottom() {
 			var sHeight = wrapper.prop('scrollHeight');
@@ -107,30 +123,36 @@
 						if (commands.length > 2) {
 							out = "logging in with: " + commands[1] + " and " + commands[2]
 							var pp = connection.invoke("Login", commands[1], commands[2]).catch(err => console.error(err.toString()));
-							//var qq = connection.invoke("Login", "john", "foobar").catch(err => console.error(err.toString()));
 						} else {
 							out = "uid and password required!"
 						}
 
 						break;
+						case "logout":
+						if (commands.length > 1) {
+							out = "logging out with: " + commands[1]
+							var pp = connection.invoke("Logout", commands[1]).catch(err => console.error(err.toString()));
+						} else {
+							out = "uid required!"
+						}						
+						break;
+						case "games":
+						//var i=0
+						printPrompt(command)
+						for (var i=0;i<8;i++) {
+							printMessage("[" + i + "]: " + " awesome game")
+						}
+						break;
+						default:
+						println(command,out)
+						break;
 					}
 				}
 
-				
-				var html = pre.html();
-				if (html) { html += '\n'; }
-				var message = "<span style=\"color:white\">" + out + "</span>";
-				pre.html(html + '> ' + command + '\n' + message);
-    			scroll_to_bottom();
+			
+    			
     	}
     });
-
-		// $('#terminal').terminal({
-  //  			name: function(name) {
-  //     				this.read('last name: ').then(last_name => this.echo('Your name is ' + name + ' ' + last_name));
-  //  				}
-		// 	});
-
 
 	</script>
 
