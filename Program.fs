@@ -36,18 +36,19 @@ type GameHub() =
     /// Accept client logins  
     member this.Login(userId : string, pwd: string) =
         let connectionId = this.Context.ConnectionId
-        async {
-            match! tryAuthenticate userId pwd with
-            | true ->
+
+        task {
+            // Maybe Async.StartImmediateAsTask is the right thing to do instead of Async.StartAsTask
+            match! tryAuthenticate userId pwd |> Async.StartAsTask with
+            | true -> 
                 register userId connectionId
                 this.Clients.Client(connectionId).LoginResponse(true, userId) |> ignore
                 this.Clients.All.Message(sprintf "New Player: %s (%s)" userId connectionId) |> ignore
-            | false ->
+            | false -> 
                 this.Clients.Client(connectionId).LoginResponse(false, userId) |> ignore
-        } 
-        |> Async.RunSynchronously /// 
-        // Blocking here NOT A good but otherwise, however, otherwise calls to hub
-        // captured by the closure fail.
+        }
+        
+        
        
         
     /// Handle client logout
